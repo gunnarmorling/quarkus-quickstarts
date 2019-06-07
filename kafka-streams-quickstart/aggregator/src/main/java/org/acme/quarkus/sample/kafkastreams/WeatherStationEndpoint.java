@@ -1,4 +1,4 @@
-package org.acme.quarkus.sample;
+package org.acme.quarkus.sample.kafkastreams;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

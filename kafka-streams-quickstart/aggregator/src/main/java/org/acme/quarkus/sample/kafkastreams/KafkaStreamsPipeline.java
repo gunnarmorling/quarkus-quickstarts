@@ -1,4 +1,4 @@
-package org.acme.quarkus.sample;
+package org.acme.quarkus.sample.kafkastreams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +31,7 @@ import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -38,11 +39,14 @@ import io.quarkus.runtime.StartupEvent;
 @ApplicationScoped
 public class KafkaStreamsPipeline {
 
-    private static final String WEATHER_STATIONS_STORE = "weather-stations-store";
+	private static final String WEATHER_STATIONS_STORE = "weather-stations-store";
 
     private static final String WEATHER_STATIONS_TOPIC = "weather-stations";
     private static final String TEMPERATURE_VALUES_TOPIC = "temperature-values";
     private static final String TEMPERATURES_AGGREGATED_TOPIC = "temperatures-aggregated";
+
+    @ConfigProperty(name="org.acme.quarkus.sample.kafkastreams.bootstrap.servers", defaultValue="localhost:9092")
+    private String bootstrapServers;
 
     private KafkaStreams streams;
 
@@ -51,7 +55,7 @@ public class KafkaStreamsPipeline {
     void onStart(@Observes StartupEvent ev) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "temperature-aggregator");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 10 * 1024);
         props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000);
         props.put(CommonClientConfigs.METADATA_MAX_AGE_CONFIG, 500);
@@ -111,7 +115,7 @@ public class KafkaStreamsPipeline {
 
         executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            waitForTopicsToBeCreated("localhost:9092");
+            waitForTopicsToBeCreated(bootstrapServers);
             streams.start();
         });
     }

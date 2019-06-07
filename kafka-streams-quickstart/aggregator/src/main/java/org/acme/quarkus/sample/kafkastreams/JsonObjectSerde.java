@@ -1,4 +1,4 @@
-package org.acme.quarkus.sample;
+package org.acme.quarkus.sample.kafkastreams;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

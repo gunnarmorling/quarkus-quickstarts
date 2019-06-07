@@ -32,11 +32,11 @@ public class PriceGenerator {
 
     @Outgoing("weather-stations")
     public Flowable<KafkaMessage<Integer, String>> weatherStations() {
-    	List<KafkaMessage<Integer, String>> stations = new ArrayList<>();
-    	stations.add(KafkaMessage.of(1, "{ \"id\" : 1, \"name\" : \"Hamburg\" }"));
-    	stations.add(KafkaMessage.of(2, "{ \"id\" : 2, \"name\" : \"Snowdonia\" }"));
-    	stations.add(KafkaMessage.of(3, "{ \"id\" : 3, \"name\" : \"Boston\" }"));
+        List<KafkaMessage<Integer, String>> stations = new ArrayList<>();
+        stations.add(KafkaMessage.of(1, "{ \"id\" : 1, \"name\" : \"Hamburg\" }"));
+        stations.add(KafkaMessage.of(2, "{ \"id\" : 2, \"name\" : \"Snowdonia\" }"));
+        stations.add(KafkaMessage.of(3, "{ \"id\" : 3, \"name\" : \"Boston\" }"));
 
-    	return Flowable.fromIterable(stations);
+        return Flowable.fromIterable(stations);
 	};
 }
