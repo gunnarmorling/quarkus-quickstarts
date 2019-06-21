@@ -44,3 +44,21 @@ services:
       dockerfile: src/main/docker/Dockerfile.${QUARKUS_MODE:-jvm}
     environment:
       ORG_ACME_QUARKUS_SAMPLE_KAFKASTREAMS_BOOTSTRAP_SERVERS: kafka:9092
+
+  prometheus:
+    image: quarkus-quickstarts/kafka-streams-prometheus:1.0
+    build:
+      context: prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: quarkus-quickstarts/kafka-streams-grafana:1.0
+    build:
+      context: grafana
+    ports:
+     - 3000:3000
+    links:
+     - prometheus
+    environment:
+     - DS_PROMETHEUS=prometheus

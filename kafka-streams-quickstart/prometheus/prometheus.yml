@@ -1,0 +1,11 @@
+scrape_configs:
+  - job_name:       'temperatures'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+
+    static_configs:
+      - targets: ['aggregator:8080']
+        labels:
+          group: 'production'

@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 
+import org.acme.quarkus.sample.kafkastreams.metrics.MetricsExporter;
 import org.acme.quarkus.sample.kafkastreams.model.Aggregation;
 import org.acme.quarkus.sample.kafkastreams.model.TemperatureMeasurement;
 import org.acme.quarkus.sample.kafkastreams.model.WeatherStation;
@@ -66,6 +68,9 @@ public class KafkaStreamsPipeline {
 
     @ConfigProperty(name = "quarkus.http.port")
     int port;
+
+    @Inject
+    MetricsExporter metricsExporter;
 
     private KafkaStreams streams;
 
@@ -124,6 +129,7 @@ public class KafkaStreamsPipeline {
         executor.execute(() -> {
             waitForTopicsToBeCreated(bootstrapServers);
             streams.start();
+            metricsExporter.exportMetrics(streams);
         });
     }
 
