@@ -173,6 +173,10 @@ public class KafkaStreamsPipeline {
         }
     }
 
+    public boolean isRunning() {
+        return streams.state().isRunning();
+    }
+
     private ReadOnlyKeyValueStore<Integer, Aggregation> getWeatherStationStore() {
         while (true) {
             try {
