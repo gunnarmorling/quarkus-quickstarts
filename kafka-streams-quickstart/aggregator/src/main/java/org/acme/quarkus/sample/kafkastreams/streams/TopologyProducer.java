@@ -1,42 +1,33 @@
 package org.acme.quarkus.sample.kafkastreams.streams;
 
-import java.time.Instant;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.json.Json;
 
-import org.acme.quarkus.sample.kafkastreams.model.Aggregation;
-import org.acme.quarkus.sample.kafkastreams.model.TemperatureMeasurement;
 import org.acme.quarkus.sample.kafkastreams.model.WeatherStation;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.GlobalKTable;
-import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.Stores;
 
 import io.quarkus.kafka.client.serialization.JsonbSerde;
 
 @ApplicationScoped
 public class TopologyProducer {
 
-    static final String WEATHER_STATIONS_STORE = "weather-stations-store";
-
     private static final String WEATHER_STATIONS_TOPIC = "weather-stations";
     private static final String TEMPERATURE_VALUES_TOPIC = "temperature-values";
-    private static final String TEMPERATURES_AGGREGATED_TOPIC = "temperatures-aggregated";
+    private static final String TEMPERATURES_ENRICHED_TOPIC = "temperatures-enriched";
 
     @Produces
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
         JsonbSerde<WeatherStation> weatherStationSerde = new JsonbSerde<>(WeatherStation.class);
-        JsonbSerde<Aggregation> aggregationSerde = new JsonbSerde<>(Aggregation.class);
-
-        KeyValueBytesStoreSupplier storeSupplier = Stores.persistentKeyValueStore(WEATHER_STATIONS_STORE);
+        JsonObjectSerde jsonObjectSerde = new JsonObjectSerde();
 
         GlobalKTable<Integer, WeatherStation> stations = builder.globalTable(
                 WEATHER_STATIONS_TOPIC,
@@ -46,28 +37,65 @@ public class TopologyProducer {
                         TEMPERATURE_VALUES_TOPIC,
                         Consumed.with(Serdes.Integer(), Serdes.String())
                 )
+                .map((Integer stationId, String measurement) -> {
+                    String[] parts = measurement.split(";");
+                    String ts = parts[0];
+                    Double value = Double.valueOf(parts[1]);
+
+                    return KeyValue.pair(stationId, Json.createObjectBuilder()
+                        .add("stationId", stationId)
+                        .add("ts", ts)
+                        .add("value", value)
+                        .build());
+                })
                 .join(
                         stations,
-                        (stationId, timestampAndValue) -> stationId,
-                        (timestampAndValue, station) -> {
-                            String[] parts = timestampAndValue.split(";");
-                            return new TemperatureMeasurement(station.id, station.name, Instant.parse(parts[0]), Double.valueOf(parts[1]));
-                        }
+                        (stationId, measurement) -> stationId,
+                        (measurement, station) ->
+                            Json.createObjectBuilder(measurement)
+                                .add("stationName", station.name)
+                                .build()
                 )
-                .groupByKey()
-                .aggregate(
-                        Aggregation::new,
-                        (stationId, value, aggregation) -> aggregation.updateFrom(value),
-                        Materialized.<Integer, Aggregation> as(storeSupplier)
-                            .withKeySerde(Serdes.Integer())
-                            .withValueSerde(aggregationSerde)
-                )
-                .toStream()
                 .to(
-                        TEMPERATURES_AGGREGATED_TOPIC,
-                        Produced.with(Serdes.Integer(), aggregationSerde)
+                        TEMPERATURES_ENRICHED_TOPIC,
+                        Produced.with(Serdes.Integer(), jsonObjectSerde)
                 );
 
         return builder.build();
+    }
+
+
+
+
+
+    
+    private String getIcon(double temperature) {
+        return temperature < 0 ? "⛄⛄⛄" :
+            temperature < 10 ? "🌱🌱🌱" :
+            temperature < 20 ? "🌷🌷🌷" :
+            temperature < 30 ? "🌳🌳🌳" :
+                "🌴🌴🌴";
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private Object test() {
+        return KeyValue.pair("stationId", Json.createObjectBuilder()
+        .add("stationId", "stationId")
+        .add("ts", "ts")
+        .add("value", "value")
+        .build());
     }
 }

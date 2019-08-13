@@ -49,7 +49,7 @@ public class ValuesGenerator {
     @Outgoing("temperature-values")
     public Flowable<KafkaMessage<Integer, String>> generate() {
 
-        return Flowable.interval(500, TimeUnit.MILLISECONDS)
+        return Flowable.interval(1000, TimeUnit.MILLISECONDS)
                 .onBackpressureDrop()
                 .map(tick -> {
                     WeatherStation station = stations.get(random.nextInt(stations.size()));

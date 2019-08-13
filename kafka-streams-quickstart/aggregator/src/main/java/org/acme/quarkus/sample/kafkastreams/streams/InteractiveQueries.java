@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 @ApplicationScoped
 public class InteractiveQueries {
 
+    static final String WEATHER_STATIONS_STORE = "weather-stations-store";
+
     private static final Logger LOG = LoggerFactory.getLogger(InteractiveQueries.class);
 
     @ConfigProperty(name="hostname")
@@ -31,7 +33,7 @@ public class InteractiveQueries {
     KafkaStreams streams;
 
     public List<PipelineMetadata> getMetaData() {
-        return streams.allMetadataForStore(TopologyProducer.WEATHER_STATIONS_STORE)
+        return streams.allMetadataForStore(WEATHER_STATIONS_STORE)
                 .stream()
                 .map(m -> new PipelineMetadata(
                         m.hostInfo().host() + ":" + m.hostInfo().port(),
@@ -45,7 +47,7 @@ public class InteractiveQueries {
 
     public GetWeatherStationDataResult getWeatherStationData(int id) {
         StreamsMetadata metadata = streams.metadataForKey(
-                TopologyProducer.WEATHER_STATIONS_STORE,
+                WEATHER_STATIONS_STORE,
                 id,
                 Serdes.Integer().serializer()
         );
